@@ -9,6 +9,9 @@
     <style>
         body { background: #f0f4f8; }
         .navbar { background: #198754 !important; }
+        .btn-start { font-size: 1.1rem; padding: 12px 40px; }
+        .card-action { border-radius: 16px; border: none; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+        .status-info { background: #f8f9fa; border-radius: 10px; padding: 12px 18px; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -26,7 +29,7 @@
     </div>
 </nav>
 
-<div class="container-fluid py-3 px-4" style="max-width:1200px">
+<div class="container-fluid py-4 px-4" style="max-width:1200px">
 
     {{-- ── Tab ── --}}
     <ul class="nav nav-tabs mb-4">
@@ -42,114 +45,89 @@
         </li>
     </ul>
 
-    {{-- ── Form Scanning ── --}}
+    {{-- ── SCANNING ── --}}
     <div id="form-scanning">
-        <div class="card mb-4">
-            <div class="card-body">
-                <h6 class="fw-bold mb-3">🔍 Buat Sesi Scanning Baru</h6>
-                <div class="row g-3 mb-3">
-                    <div class="col-md-3">
-                        <label class="form-label small fw-semibold text-muted text-uppercase">Jumlah Tanaman</label>
-                        <input type="number" id="s_jumlah_tanaman" class="form-control" value="24" min="1">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label small fw-semibold text-muted text-uppercase">Jarak Antar Tanaman (cm)</label>
-                        <input type="number" id="s_jarak_antar" class="form-control" value="30" step="0.1">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label small fw-semibold text-muted text-uppercase">Jarak Frame ke Tanaman (cm)</label>
-                        <input type="number" id="s_jarak_frame" class="form-control" value="20" step="0.1">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label small fw-semibold text-muted text-uppercase">Susunan Tanaman</label>
-                        <select id="s_susunan" class="form-select" onchange="updateBarisKolom('s')">
-                            <option value="3x8" data-baris="8" data-kolom="3">3 × 8 (24 tanaman)</option>
-                            <option value="custom">Custom</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="row g-3 mb-3">
-                    <div class="col-md-3">
-                        <label class="form-label small fw-semibold text-muted text-uppercase">Baris</label>
-                        <input type="number" id="s_baris" class="form-control" value="8" min="1">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label small fw-semibold text-muted text-uppercase">Kolom</label>
-                        <input type="number" id="s_kolom" class="form-control" value="3" min="1">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label small fw-semibold text-muted text-uppercase">Koordinat Servo Pan °(0-180)</label>
-                        <input type="number" id="s_servo_pan" class="form-control" value="90" step="0.1">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label small fw-semibold text-muted text-uppercase">Koordinat Servo Tilt °(0-180)</label>
-                        <input type="number" id="s_servo_tilt" class="form-control" value="90" step="0.1">
+        <div class="card card-action mb-4">
+            <div class="card-body p-4">
+                <h5 class="fw-bold mb-1">🔍 Sesi Scanning Kematangan Cabai</h5>
+                <p class="text-muted small mb-4">
+                    Kamera Raspberry Pi (Dafa) akan otomatis mendeteksi kematangan:
+                    <strong>unripe / turning / ripe / broken</strong>
+                </p>
+
+                <div class="status-info mb-4">
+                    <div class="row g-2 text-center">
+                        <div class="col-4">
+                            <div class="text-muted small">Jumlah Tanaman</div>
+                            <div class="fw-bold">24 tanaman</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="text-muted small">Susunan</div>
+                            <div class="fw-bold">3 × 8</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="text-muted small">Endpoint Dafa</div>
+                            <div class="fw-bold" style="font-size:12px"><code>/api/scanning/session/active</code></div>
+                        </div>
                     </div>
                 </div>
-                <div class="alert alert-success py-2 small mb-3">
-                    📡 Perintah servo dikirim ke Raspberry Pi (Dafa) via endpoint
-                    <code>/api/scanning/session/active</code>.
-                    Kamera YOLO mendeteksi kematangan:
-                    <strong>unripe / turning / ripe / broken</strong>.
+
+                <div class="d-flex gap-3 align-items-center">
+                    <button class="btn btn-success btn-start fw-bold" onclick="buatSesi('scanning')" id="btn-mulai-scanning">
+                        🚀 Mulai Scanning
+                    </button>
+                    <button class="btn btn-danger btn-start fw-bold d-none" onclick="stopSesi('scanning')" id="btn-stop-scanning">
+                        ⛔ Stop Scanning
+                    </button>
                 </div>
-                <button class="btn btn-success fw-semibold px-4" onclick="buatSesi('scanning')">
-                    🚀 Mulai Sesi Scanning
-                </button>
-                <div id="alert-scanning" class="mt-2"></div>
+                <div id="alert-scanning" class="mt-3"></div>
             </div>
         </div>
     </div>
 
-    {{-- ── Form Penyiraman ── --}}
+    {{-- ── PENYIRAMAN ── --}}
     <div id="form-penyiraman" style="display:none">
-        <div class="card mb-4">
-            <div class="card-body">
-                <h6 class="fw-bold mb-3">💧 Buat Sesi Penyiraman Baru</h6>
-                <div class="row g-3 mb-3">
-                    <div class="col-md-3">
-                        <label class="form-label small fw-semibold text-muted text-uppercase">Jumlah Tanaman</label>
-                        <input type="number" id="p_jumlah_tanaman" class="form-control" value="24">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label small fw-semibold text-muted text-uppercase">Jarak Antar Tanaman (cm)</label>
-                        <input type="number" id="p_jarak_antar" class="form-control" value="30" step="0.1">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label small fw-semibold text-muted text-uppercase">Jarak Frame ke Tanaman (cm)</label>
-                        <input type="number" id="p_jarak_frame" class="form-control" value="20" step="0.1">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label small fw-semibold text-muted text-uppercase">Susunan Tanaman</label>
-                        <select id="p_susunan" class="form-select" onchange="updateBarisKolom('p')">
-                            <option value="3x8" data-baris="8" data-kolom="3">3 × 8 (24 tanaman)</option>
-                            <option value="custom">Custom</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="row g-3 mb-3">
-                    <div class="col-md-3">
-                        <label class="form-label small fw-semibold text-muted text-uppercase">Baris</label>
-                        <input type="number" id="p_baris" class="form-control" value="8">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label small fw-semibold text-muted text-uppercase">Kolom</label>
-                        <input type="number" id="p_kolom" class="form-control" value="3">
+        <div class="card card-action mb-4">
+            <div class="card-body p-4">
+                <h5 class="fw-bold mb-1">💧 Sesi Penyiraman</h5>
+                <p class="text-muted small mb-4">
+                    Solenoid valve dikontrol langsung via aktuator ESP32 Master (Rio).
+                    Tidak menggerakkan servo kamera.
+                </p>
+
+                <div class="status-info mb-4">
+                    <div class="row g-2 text-center">
+                        <div class="col-4">
+                            <div class="text-muted small">Jumlah Tanaman</div>
+                            <div class="fw-bold">24 tanaman</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="text-muted small">Susunan</div>
+                            <div class="fw-bold">3 × 8</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="text-muted small">Kontrol via</div>
+                            <div class="fw-bold">ESP32 Master (Rio)</div>
+                        </div>
                     </div>
                 </div>
-                <div class="alert alert-info py-2 small mb-3">
-                    💧 Sesi penyiraman tidak menggerakkan servo. Solenoid valve dikontrol langsung via aktuator ESP32 Master (Rio) · Channel Pusher: <code>scanning-{id}</code>
+
+                <div class="d-flex gap-3 align-items-center">
+                    <button class="btn btn-primary btn-start fw-bold" onclick="buatSesi('penyiraman')" id="btn-mulai-penyiraman">
+                        💧 Mulai Penyiraman
+                    </button>
+                    <button class="btn btn-danger btn-start fw-bold d-none" onclick="stopSesi('penyiraman')" id="btn-stop-penyiraman">
+                        ⛔ Stop Penyiraman
+                    </button>
                 </div>
-                <button class="btn btn-primary fw-semibold px-4" onclick="buatSesi('penyiraman')">
-                    💧 Mulai Sesi Penyiraman
-                </button>
-                <div id="alert-penyiraman" class="mt-2"></div>
+                <div id="alert-penyiraman" class="mt-3"></div>
             </div>
         </div>
     </div>
 
     {{-- ── Riwayat Sesi ── --}}
-    <div class="card">
-        <div class="card-body">
+    <div class="card card-action">
+        <div class="card-body p-4">
             <h6 class="fw-bold mb-3">📋 Riwayat Sesi</h6>
             <div class="table-responsive">
                 <table class="table table-hover table-sm align-middle">
@@ -223,6 +201,20 @@
 </div>
 
 <script>
+// Konfigurasi default — tidak perlu diubah dari dashboard
+const DEFAULT_CONFIG = {
+    jumlah_tanaman:         24,
+    jarak_antar_tanaman:    30,
+    jarak_frame_ke_tanaman: 20,
+    susunan_tanaman:        '3x8',
+    baris:                  8,
+    kolom:                  3,
+    servo_pan:              90,
+    servo_tilt:             90,
+};
+
+let aktiveSesiId = { scanning: null, penyiraman: null };
+
 function switchTab(tab) {
     const isScan = tab === 'scanning';
     document.getElementById('form-scanning').style.display   = isScan ? 'block' : 'none';
@@ -231,34 +223,19 @@ function switchTab(tab) {
     document.getElementById('tab-water-btn').className = 'nav-link' + (!isScan ? ' active' : '');
 }
 
-function updateBarisKolom(prefix) {
-    const sel = document.getElementById(prefix + '_susunan');
-    const opt = sel.options[sel.selectedIndex];
-    if (opt.value !== 'custom') {
-        document.getElementById(prefix + '_baris').value = opt.dataset.baris;
-        document.getElementById(prefix + '_kolom').value = opt.dataset.kolom;
-        document.getElementById(prefix + '_jumlah_tanaman').value =
-            parseInt(opt.dataset.baris) * parseInt(opt.dataset.kolom);
-    }
-}
-
 function buatSesi(tipe) {
-    const prefix  = tipe === 'scanning' ? 's' : 'p';
     const url     = tipe === 'scanning' ? '/api/scanning/session' : '/api/scanning/penyiraman';
     const alertEl = document.getElementById('alert-' + tipe);
-    alertEl.innerHTML = `<div class="alert alert-info py-2 small">⏳ Membuat sesi...</div>`;
+    const btnMulai = document.getElementById('btn-mulai-' + tipe);
+    const btnStop  = document.getElementById('btn-stop-' + tipe);
 
-    const data = {
-        jumlah_tanaman:         parseInt(document.getElementById(prefix + '_jumlah_tanaman').value),
-        jarak_antar_tanaman:    parseFloat(document.getElementById(prefix + '_jarak_antar').value),
-        jarak_frame_ke_tanaman: parseFloat(document.getElementById(prefix + '_jarak_frame').value),
-        susunan_tanaman:        document.getElementById(prefix + '_susunan').value,
-        baris:                  parseInt(document.getElementById(prefix + '_baris').value),
-        kolom:                  parseInt(document.getElementById(prefix + '_kolom').value),
-    };
-    if (tipe === 'scanning') {
-        data.servo_pan  = parseFloat(document.getElementById('s_servo_pan').value);
-        data.servo_tilt = parseFloat(document.getElementById('s_servo_tilt').value);
+    alertEl.innerHTML = `<div class="alert alert-info py-2 small">⏳ Membuat sesi...</div>`;
+    btnMulai.disabled = true;
+
+    const data = { ...DEFAULT_CONFIG };
+    if (tipe === 'penyiraman') {
+        delete data.servo_pan;
+        delete data.servo_tilt;
     }
 
     fetch(url, {
@@ -271,14 +248,53 @@ function buatSesi(tipe) {
     })
     .then(r => r.json())
     .then(res => {
+        aktiveSesiId[tipe] = res.session_id;
         alertEl.innerHTML = `<div class="alert alert-success py-2 small">
-            ✅ Sesi #${res.session_id} berhasil dibuat!
+            ✅ Sesi #${res.session_id} berhasil dibuat! Menunggu ${tipe === 'scanning' ? 'Dafa (Raspberry Pi)' : 'Rio (ESP32)'} memulai...
             <a href="/scanning/${res.session_id}/live" class="fw-semibold ms-2">👁️ Buka Live View →</a>
         </div>`;
-        setTimeout(() => location.reload(), 2500);
+        btnMulai.classList.add('d-none');
+        btnStop.classList.remove('d-none');
+        setTimeout(() => location.reload(), 3000);
     })
     .catch(() => {
         alertEl.innerHTML = `<div class="alert alert-danger py-2 small">❌ Gagal membuat sesi. Periksa koneksi server.</div>`;
+        btnMulai.disabled = false;
+    });
+}
+
+function stopSesi(tipe) {
+    const sesiId  = aktiveSesiId[tipe];
+    const alertEl = document.getElementById('alert-' + tipe);
+    const btnMulai = document.getElementById('btn-mulai-' + tipe);
+    const btnStop  = document.getElementById('btn-stop-' + tipe);
+
+    if (!sesiId) {
+        alertEl.innerHTML = `<div class="alert alert-warning py-2 small">⚠️ Tidak ada sesi aktif yang bisa dihentikan.</div>`;
+        return;
+    }
+
+    alertEl.innerHTML = `<div class="alert alert-warning py-2 small">⏳ Menghentikan sesi...</div>`;
+
+    fetch(`/api/scanning/session/${sesiId}/status`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({ status: 'error' })
+    })
+    .then(r => r.json())
+    .then(() => {
+        alertEl.innerHTML = `<div class="alert alert-danger py-2 small">⛔ Sesi #${sesiId} dihentikan.</div>`;
+        aktiveSesiId[tipe] = null;
+        btnStop.classList.add('d-none');
+        btnMulai.classList.remove('d-none');
+        btnMulai.disabled = false;
+        setTimeout(() => location.reload(), 2000);
+    })
+    .catch(() => {
+        alertEl.innerHTML = `<div class="alert alert-danger py-2 small">❌ Gagal menghentikan sesi.</div>`;
     });
 }
 </script>
