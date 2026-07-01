@@ -55,6 +55,22 @@
         .speed-row { display: flex; gap: 6px; margin-top: 10px; }
         .speed-row input { flex: 1; font-size: 13px; }
 
+        /* ── Live Scanning Panel ── */
+        .live-frame-wrap { position: relative; overflow: hidden; border-radius: 0 0 10px 10px; }
+        #live-frame { display: block; }
+        .live-overlay {
+            position: absolute; bottom: 8px; left: 8px;
+            background: rgba(0,0,0,.6); color: #fff;
+            padding: 4px 10px; border-radius: 4px; font-size: 12px;
+        }
+        .live-status-badge {
+            font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px;
+        }
+        .live-on  { background: #d1fae5; color: #065f46; }
+        .live-off { background: #fee2e2; color: #991b1b; }
+        .live-progress { height: 4px; border-radius: 0; background: #e9ecef; }
+        .live-progress-bar { height: 100%; background: #198754; width: 0%; transition: width .5s; }
+
         /* ── Log Table ── */
         .log-table th { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: #6c757d; background: #f8f9fa; }
         .log-table td { font-size: 13px; color: #374151; vertical-align: middle; }
@@ -178,6 +194,32 @@
         </div>
     </div>
 
+    {{-- ── Live Scanning Cabai ── --}}
+    <div class="card mb-4" id="panel-live-scanning">
+        <div class="card-header-custom d-flex justify-content-between align-items-center">
+            <span>📷 Live Scanning Kematangan Cabai</span>
+            <span class="live-status-badge live-on" id="live-badge">● LIVE</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="live-frame-wrap">
+                <img id="live-frame"
+                     src="/images/placeholder-camera.jpg"
+                     alt="Live Capture"
+                     class="w-100"
+                     style="min-height:200px; object-fit:cover;">
+                <div class="live-overlay" id="live-tanaman">Menunggu capture...</div>
+            </div>
+            <div class="live-progress">
+                <div class="live-progress-bar" id="live-progress"></div>
+            </div>
+        </div>
+        <div class="card-footer text-muted" style="font-size:12px;">
+            <span id="live-skor">Skor kematangan: —</span> &nbsp;|&nbsp;
+            <span id="live-kategori">Kategori: —</span> &nbsp;|&nbsp;
+            <span id="live-time">—</span>
+        </div>
+    </div>
+
     {{-- ── Log Data Terbaru ── --}}
     <div class="card">
         <div class="card-header-custom">📋 Log Data Terbaru</div>
@@ -240,6 +282,32 @@ channel.bind('sensor.alert', function(data) {
     showToast(data.sensorType, data.value, data.unit, data.status);
     updateSensorCard(data.sensorType, data.value, data.status);
 });
+
+// ── Live Scanning via SSE ──────────────────────────────────────────────
+const liveStream = new EventSource('/scanning/stream');
+
+liveStream.addEventListener('capture', function (e) {
+    const d = JSON.parse(e.data);
+
+    document.getElementById('live-frame').src = d.image_url + '?t=' + Date.now();
+    document.getElementById('live-tanaman').innerText  = 'Tanaman ' + d.tanaman_id;
+    document.getElementById('live-skor').innerText     = 'Skor kematangan: ' + d.ripeness_score + '%';
+    document.getElementById('live-kategori').innerText = 'Kategori: ' + d.kategori;
+    document.getElementById('live-time').innerText     = d.timestamp;
+    document.getElementById('live-progress').style.width = d.progress + '%';
+
+    const badge = document.getElementById('live-badge');
+    badge.textContent = '● LIVE';
+    badge.className = 'live-status-badge live-on';
+});
+
+liveStream.onerror = function () {
+    const badge = document.getElementById('live-badge');
+    badge.textContent = '● OFFLINE';
+    badge.className = 'live-status-badge live-off';
+    document.getElementById('live-tanaman').innerText = 'Koneksi terputus, mencoba ulang...';
+};
+// ── END Live Scanning ─────────────────────────────────────────────────
 
 function showToast(sensor, value, unit, status) {
     const icons  = { danger:'🔴', warning:'⚠️', normal:'✅' };
