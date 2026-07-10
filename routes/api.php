@@ -3,6 +3,7 @@
 use App\Http\Controllers\SensorController;
 use App\Http\Controllers\ActuatorController;
 use App\Http\Controllers\ScanningController;
+use App\Http\Controllers\IrrigationController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/sensor-data', [SensorController::class, 'store']);
@@ -20,3 +21,5 @@ Route::get('/scanning/session/{id}/results', [ScanningController::class, 'getRes
 Route::post('/scanning/session/{id}/status',   [ScanningController::class, 'updateStatus']);
 Route::post('/scanning/session/{id}/progress', [ScanningController::class, 'updateProgress']);
 Route::get('/scanning/rekap',                  [ScanningController::class, 'getRekap']);
+// ── Irigasi (hasil fuzzy dari ESP32) ──
+Route::post('/irrigation-data', [IrrigationController::class, 'store']);

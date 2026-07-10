@@ -20,9 +20,9 @@
 <nav class="navbar navbar-dark px-4 py-2">
     <span class="navbar-brand fw-bold">🌿 Greenhouse Monitor</span>
     <div class="d-flex gap-2">
-        <a href="/" class="btn btn-outline-light btn-sm">Dashboard</a>
-        <a href="/sensors" class="btn btn-outline-light btn-sm">Sensor</a>
-        <form method="POST" action="/logout" class="mb-0">
+        <a href="{{ url('/') }}" class="btn btn-outline-light btn-sm">Dashboard</a>
+        <a href="{{ url('/sensors') }}" class="btn btn-outline-light btn-sm">Sensor</a>
+        <form method="POST" action="{{ url('/logout') }}" class="mb-0">
             @csrf
             <button type="submit" class="btn btn-outline-light btn-sm">Logout</button>
         </form>
@@ -59,11 +59,11 @@
                     <div class="row g-2 text-center">
                         <div class="col-4">
                             <div class="text-muted small">Jumlah Tanaman</div>
-                            <div class="fw-bold">24 tanaman</div>
+                            <div class="fw-bold">27 tanaman</div>
                         </div>
                         <div class="col-4">
                             <div class="text-muted small">Susunan</div>
-                            <div class="fw-bold">3 × 8</div>
+                            <div class="fw-bold">3 × 9</div>
                         </div>
                         <div class="col-4">
                             <div class="text-muted small">Endpoint Dafa</div>
@@ -99,11 +99,11 @@
                     <div class="row g-2 text-center">
                         <div class="col-4">
                             <div class="text-muted small">Jumlah Tanaman</div>
-                            <div class="fw-bold">24 tanaman</div>
+                            <div class="fw-bold">27 tanaman</div>
                         </div>
                         <div class="col-4">
                             <div class="text-muted small">Susunan</div>
-                            <div class="fw-bold">3 × 8</div>
+                            <div class="fw-bold">3 × 9</div>
                         </div>
                         <div class="col-4">
                             <div class="text-muted small">Kontrol via</div>
@@ -154,7 +154,7 @@
                                     <span class="badge bg-success">🔍 Scanning</span>
                                 @endif
                             </td>
-                            <td style="font-family:monospace;font-size:13px">{{ $s->susunan_tanaman ?? '3x8' }}</td>
+                            <td style="font-family:monospace;font-size:13px">{{ $s->susunan_tanaman ?? '3x9' }}</td>
                             <td>{{ $s->jumlah_tanaman }} tanaman</td>
                             <td>
                                 @if($s->status === 'done')
@@ -179,7 +179,7 @@
                                 {{ $s->created_at->format('d/m H:i') }}
                             </td>
                             <td>
-                                <a href="/scanning/{{ $s->id }}/live" class="btn btn-outline-success btn-sm">
+                                
                                     👁️ Live
                                 </a>
                             </td>
@@ -203,11 +203,11 @@
 <script>
 // Konfigurasi default — tidak perlu diubah dari dashboard
 const DEFAULT_CONFIG = {
-    jumlah_tanaman:         24,
+    jumlah_tanaman:         27,
     jarak_antar_tanaman:    30,
     jarak_frame_ke_tanaman: 20,
-    susunan_tanaman:        '3x8',
-    baris:                  8,
+    susunan_tanaman:        '3x9',
+    baris:                  9,
     kolom:                  3,
     servo_pan:              90,
     servo_tilt:             90,
@@ -224,7 +224,7 @@ function switchTab(tab) {
 }
 
 function buatSesi(tipe) {
-    const url     = tipe === 'scanning' ? '/api/scanning/session' : '/api/scanning/penyiraman';
+    const url     = tipe === 'scanning' ? '{{ url('/api/scanning/session') }}' : '{{ url('/api/scanning/penyiraman') }}';
     const alertEl = document.getElementById('alert-' + tipe);
     const btnMulai = document.getElementById('btn-mulai-' + tipe);
     const btnStop  = document.getElementById('btn-stop-' + tipe);
@@ -251,7 +251,7 @@ function buatSesi(tipe) {
         aktiveSesiId[tipe] = res.session_id;
         alertEl.innerHTML = `<div class="alert alert-success py-2 small">
             ✅ Sesi #${res.session_id} berhasil dibuat! Menunggu ${tipe === 'scanning' ? 'Dafa (Raspberry Pi)' : 'Rio (ESP32)'} memulai...
-            <a href="/scanning/${res.session_id}/live" class="fw-semibold ms-2">👁️ Buka Live View →</a>
+            <a href="{{ url('/scanning') }}/${res.session_id}/live" class="fw-semibold ms-2">👁️ Buka Live View →</a>
         </div>`;
         btnMulai.classList.add('d-none');
         btnStop.classList.remove('d-none');
@@ -276,7 +276,7 @@ function stopSesi(tipe) {
 
     alertEl.innerHTML = `<div class="alert alert-warning py-2 small">⏳ Menghentikan sesi...</div>`;
 
-    fetch(`/api/scanning/session/${sesiId}/status`, {
+    fetch(`{{ url('/api/scanning/session') }}/${sesiId}/status`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

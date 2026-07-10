@@ -316,7 +316,7 @@
 
 {{-- ── Navbar ── --}}
 <nav class="gh-navbar">
-    <a href="/scanning" class="gh-navbar-brand">
+    <a href="{{ url('/scanning') }}" class="gh-navbar-brand">
         🌿 Live {{ $session->penyiraman && !$session->servo_pan ? '💧 Penyiraman' : '🔍 Scanning' }}
         — Sesi #{{ $session->id }}
     </a>
@@ -329,28 +329,7 @@
             @endif
         </span>
 
-        {{-- ── Tombol Kontrol Session ── --}}
-        <div id="session-controls" style="display:flex;gap:6px">
-            @if($session->status === 'pending')
-            <button onclick="updateStatus('scanning')"
-                style="background:#22c55e;border:none;color:#fff;padding:5px 14px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer">
-                ▶ Start
-            </button>
-            @endif
-
-            @if($session->status === 'scanning')
-            <button onclick="updateStatus('done')"
-                style="background:#3b82f6;border:none;color:#fff;padding:5px 14px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer">
-                ⏹ Stop
-            </button>
-            <button onclick="updateStatus('error')"
-                style="background:#ef4444;border:none;color:#fff;padding:5px 14px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer">
-                ✕ Error
-            </button>
-            @endif
-        </div>
-
-        <a href="/scanning" class="btn-back-nav">← Kembali</a>
+        <a href="{{ url('/scanning') }}" class="btn-back-nav">← Kembali</a>
     </div>
 </nav>
 
@@ -593,35 +572,6 @@ const SESSION_ID = {{ $session->id }};
 const TOTAL      = {{ $session->jumlah_tanaman }};
 let   plantData  = {};
 
-function updateStatus(newStatus) {
-    const labels = {
-        scanning: 'Start scanning?',
-        done: 'Stop dan selesaikan sesi?',
-        error: 'Tandai sesi sebagai error?'
-    };
-    if (!confirm(labels[newStatus] || 'Yakin?')) return;
-
-    fetch('/api/scanning/session/' + SESSION_ID + '/status', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-        },
-        body: JSON.stringify({ status: newStatus })
-    })
-    .then(r => {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return r.json();
-    })
-    .then(() => {
-        setTimeout(() => location.reload(), 800);
-    })
-    .catch(err => {
-        alert('Gagal update status: ' + err.message);
-    });
-}
-
 function getIcon(k) {
     const m = { ripe:'🌶️', matang:'🌶️', turning:'🫑', setengah_matang:'🫑',
                 unripe:'🌱', mentah:'🌱', broken:'🍂', rusak:'🍂' };
@@ -681,7 +631,7 @@ function updateRekapTotal(r) {
 }
 
 function fetchResults() {
-    fetch('/api/scanning/session/' + SESSION_ID + '/results')
+    fetch('{{ url('/api/scanning/session') }}/' + SESSION_ID + '/results')
     .then(r => r.json())
     .then(data => {
         const results = data.results || [];

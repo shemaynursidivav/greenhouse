@@ -2,7 +2,7 @@
 <html lang="id"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="csrf-token" content="{{ csrf_token() }}">
-<title>Manajemen Sensor — Greenhouse Monitor</title>
+<title>Rekap — Greenhouse Monitor</title>
 
 
 <style>
@@ -115,9 +115,9 @@
   <div class="sb-sec">Menu</div>
   <nav class="sb-nav">
     <a class="" href="{{ url('/') }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Dashboard</span></a>
-    <a class="active" href="{{ url('/sensors') }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg><span>Kelola Sensor</span></a>
+    <a class="" href="{{ url('/sensors') }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg><span>Kelola Sensor</span></a>
     <a class="" href="{{ route('gantry.live') }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="12" r="3"/></svg><span>Gantry</span></a>
-    <a class="" href="{{ route('gantry.recap') }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span>Rekap</span></a>
+    <a class="active" href="{{ route('gantry.recap') }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span>Rekap</span></a>
     <a class="" href="{{ route('soil.index') }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg><span>Grafik Sensor</span></a>
   </nav>
   <div class="sb-foot">
@@ -129,71 +129,29 @@
 </aside>
 <main class="content">
 
-<div class="pagehead"><div><h1>Manajemen Node Sensor</h1><div class="sub">Registrasi node sensor beserta setpoint (SPmin/SPmax) untuk klasifikasi status pembacaan</div></div></div>
-@if(session('success'))<div class="flash">{{ session('success') }}</div>@endif
-@if(session('error'))<div class="flash err">{{ session('error') }}</div>@endif
-
-<div class="section-title">Notifikasi Email</div>
-<div class="panel pad" style="margin-bottom:18px">
-  @php
-    $notifEmail = \DB::table('app_settings')->where('name','notify_email')->value('value');
-    $notifOn    = \DB::table('app_settings')->where('name','notify_enabled')->value('value') === '1';
-  @endphp
-  <form method="POST" action="{{ route('notify.save') }}">@csrf
-    <div class="form-grid">
-      <div>
-        <label>Email Penerima Peringatan</label>
-        <input type="email" name="notify_email" value="{{ $notifEmail }}" placeholder="nama@email.com">
-      </div>
-      <div style="display:flex;align-items:flex-end">
-        <label style="display:flex;align-items:center;gap:9px;text-transform:none;letter-spacing:0;font-size:13px;font-weight:500;color:var(--text);cursor:pointer;margin:0">
-          <input type="checkbox" name="notify_enabled" value="1" {{ $notifOn ? 'checked' : '' }} style="width:auto">
-          Aktifkan notifikasi email
-        </label>
-      </div>
-    </div>
-    <div class="muted" style="font-size:12px;margin:14px 0">
-      Email dikirim otomatis saat status sensor <b>berubah</b> menjadi WARNING atau DANGER (tidak spam berulang).
-    </div>
-    <button class="btn">Simpan Pengaturan</button>
-  </form>
-  <form method="POST" action="{{ route('notify.test') }}" style="margin-top:10px">@csrf
-    <button class="btn ghost">Kirim Email Uji</button>
-  </form>
+<div class="pagehead"><div><h1>Rekapitulasi &amp; Analisis Sesi</h1><div class="sub">Ringkasan seluruh sesi pemindaian &amp; penyiraman dari subsistem gantry</div></div></div>
+@if($error)<div class="flash err">{{ $error }}</div>@endif
+<div class="summary">
+  <div class="stat"><b>{{ count($scans) }}</b><span>Sesi Pemindaian</span></div>
+  <div class="stat"><b>{{ count($waters) }}</b><span>Sesi Penyiraman</span></div>
+  <div class="stat"><b>{{ array_sum(array_column($scans,'ripe')) }}</b><span>Total Ripe</span></div>
 </div>
-
-<div class="section-title">Registrasi Sensor</div>
-<div class="panel pad" style="margin-bottom:18px">
-  <form method="POST" action="{{ route('sensors.store') }}">@csrf
-    <div class="form-grid">
-      <div><label>Device ID</label><select name="device_id" required><option value="esp32_master">esp32_master</option><option value="rpi_vision">rpi_vision</option></select></div>
-      <div><label>Tipe Sensor</label><input type="text" name="sensor_type" placeholder="cth: temperature" required></div>
-      <div><label>Label</label><input type="text" name="label" placeholder="cth: Suhu Udara" required></div>
-      <div><label>Satuan</label><input type="text" name="unit" placeholder="cth: °C" required></div>
-      <div><label>Owner / PIC</label><input type="text" name="owner" placeholder="cth: Admin"></div>
-      <div><label>Setpoint Min (SPmin)</label><input type="number" step="0.01" name="threshold_min" placeholder="cth: 25"></div>
-      <div><label>Setpoint Max (SPmax)</label><input type="number" step="0.01" name="threshold_max" placeholder="cth: 30"></div>
-    </div>
-    <div class="muted" style="font-size:12px;margin:14px 0"><b>Normal:</b> SPmin ≤ PV ≤ SPmax · <b>Warning:</b> deviasi ≤ 15% · <b>Danger:</b> deviasi &gt; 15%</div>
-    <button class="btn">Simpan Sensor</button>
-  </form>
-</div>
-
-<div class="section-title">Daftar Node Sensor Terdaftar</div>
-<div class="panel"><table>
-  <thead><tr><th>Device ID</th><th>Tipe</th><th>Label</th><th>Satuan</th><th>Owner</th><th>SPmin</th><th>SPmax</th><th>Status</th><th style="text-align:right">Aksi</th></tr></thead>
-  <tbody>
-    @forelse($sensors as $sensor)
-    <tr><td><code>{{ $sensor->device_id }}</code></td><td><code>{{ $sensor->sensor_type }}</code></td>
-      <td style="font-weight:600">{{ $sensor->label }}</td><td>{{ $sensor->unit }}</td><td class="muted">{{ $sensor->owner }}</td>
-      <td class="mono cu">{{ $sensor->threshold_min ?? '—' }}</td><td class="mono cr">{{ $sensor->threshold_max ?? '—' }}</td>
-      <td>@if($sensor->is_active)<span class="st st-normal">AKTIF</span>@else<span class="st st-PENDING">NONAKTIF</span>@endif</td>
-      <td style="text-align:right"><form method="POST" action="{{ route('sensors.destroy', $sensor->id) }}" onsubmit="return confirm('Hapus sensor {{ $sensor->label }}?')" style="margin:0">@csrf @method('DELETE')<button type="submit" class="btn-del">Hapus</button></form></td></tr>
-    @empty
-    <tr><td colspan="9" style="text-align:center;padding:26px" class="muted">Belum ada node sensor terdaftar.</td></tr>
-    @endforelse
-  </tbody>
-</table></div>
+<div class="section-title">A · Rekap Pemindaian Kematangan</div>
+@if(count($scans))
+<div class="panel"><table><thead><tr><th>No</th><th>ID</th><th>Tanggal (WIB)</th><th>Tanaman</th><th>Total</th><th>Ripe</th><th>Turn</th><th>Unripe</th><th>Broken</th><th>Siap Panen</th><th>% Ripe</th></tr></thead><tbody>
+@foreach($scans as $i=>$s)<tr><td>{{ $i+1 }}</td><td>#{{ $s['id'] }}</td><td>{{ $s['date'] }}</td><td>{{ $s['plants'] }}</td><td>{{ $s['total'] }}</td>
+<td class="cr">{{ $s['ripe'] }}</td><td class="ct">{{ $s['turning'] }}</td><td class="cu">{{ $s['unripe'] }}</td><td>{{ $s['broken'] }}</td><td>{{ $s['ready'] }}</td>
+<td><b>{{ $s['pctRipe'] }}%</b></td></tr>@endforeach
+</tbody></table></div>
+<div class="muted" style="font-size:11.5px;margin-top:8px">Siap Panen = tanaman dengan buah ripe &gt; 5. % Ripe = proporsi buah matang.</div>
+@else<div class="muted">Belum ada sesi pemindaian selesai.</div>@endif
+<div class="section-title">B · Rekap Penyiraman</div>
+@if(count($waters))
+<div class="panel"><table><thead><tr><th>No</th><th>ID</th><th>Tanggal (WIB)</th><th>Titik Disiram</th><th>Durasi Fuzzy (s)</th><th>Lembab Sblm</th><th>Lembab Ssdh</th><th>Tinggi Maks (cm)</th></tr></thead><tbody>
+@foreach($waters as $i=>$w)<tr><td>{{ $i+1 }}</td><td>#{{ $w['id'] }}</td><td>{{ $w['date'] }}</td><td>{{ $w['stops'] }}</td><td>{{ $w['duration'] ?? '-' }}</td><td>{{ $w['mb'] ?? '-' }}</td><td>{{ $w['ma'] ?? '-' }}</td><td>{{ $w['height'] ?? '-' }}</td></tr>@endforeach
+</tbody></table></div>
+<div class="muted" style="font-size:11.5px;margin-top:8px">⚠ Bila Lembab = 0 &amp; Durasi selalu sama → sensor kelembapan belum terpasang saat sesi itu.</div>
+@else<div class="muted">Belum ada sesi penyiraman selesai.</div>@endif
 
 </main>
 

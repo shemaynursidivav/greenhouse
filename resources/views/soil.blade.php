@@ -2,8 +2,8 @@
 <html lang="id"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="csrf-token" content="{{ csrf_token() }}">
-<title>Manajemen Sensor — Greenhouse Monitor</title>
-
+<title>Grafik Sensor — Greenhouse Monitor</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -115,10 +115,10 @@
   <div class="sb-sec">Menu</div>
   <nav class="sb-nav">
     <a class="" href="{{ url('/') }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Dashboard</span></a>
-    <a class="active" href="{{ url('/sensors') }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg><span>Kelola Sensor</span></a>
+    <a class="" href="{{ url('/sensors') }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg><span>Kelola Sensor</span></a>
     <a class="" href="{{ route('gantry.live') }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="12" r="3"/></svg><span>Gantry</span></a>
     <a class="" href="{{ route('gantry.recap') }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span>Rekap</span></a>
-    <a class="" href="{{ route('soil.index') }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg><span>Grafik Sensor</span></a>
+    <a class="active" href="{{ route('soil.index') }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg><span>Grafik Sensor</span></a>
   </nav>
   <div class="sb-foot">
     <div class="sb-sec" style="padding-top:0">Akun</div>
@@ -129,72 +129,67 @@
 </aside>
 <main class="content">
 
-<div class="pagehead"><div><h1>Manajemen Node Sensor</h1><div class="sub">Registrasi node sensor beserta setpoint (SPmin/SPmax) untuk klasifikasi status pembacaan</div></div></div>
+<div class="pagehead"><div><h1>Grafik Sensor — Akuisisi Data</h1><div class="sub">Pemantauan &amp; perekaman data node sensor (kelembapan tanah, suhu/kelembapan udara, cahaya, fan)</div></div></div>
 @if(session('success'))<div class="flash">{{ session('success') }}</div>@endif
-@if(session('error'))<div class="flash err">{{ session('error') }}</div>@endif
+@if($errors->any())<div class="flash err">{{ $errors->first() }}</div>@endif
 
-<div class="section-title">Notifikasi Email</div>
-<div class="panel pad" style="margin-bottom:18px">
-  @php
-    $notifEmail = \DB::table('app_settings')->where('name','notify_email')->value('value');
-    $notifOn    = \DB::table('app_settings')->where('name','notify_enabled')->value('value') === '1';
-  @endphp
-  <form method="POST" action="{{ route('notify.save') }}">@csrf
+<div class="panel pad" style="margin-bottom:16px">
+  <form method="POST" action="{{ route('soil.url') }}">@csrf
     <div class="form-grid">
-      <div>
-        <label>Email Penerima Peringatan</label>
-        <input type="email" name="notify_email" value="{{ $notifEmail }}" placeholder="nama@email.com">
-      </div>
-      <div style="display:flex;align-items:flex-end">
-        <label style="display:flex;align-items:center;gap:9px;text-transform:none;letter-spacing:0;font-size:13px;font-weight:500;color:var(--text);cursor:pointer;margin:0">
-          <input type="checkbox" name="notify_enabled" value="1" {{ $notifOn ? 'checked' : '' }} style="width:auto">
-          Aktifkan notifikasi email
-        </label>
-      </div>
+      <div><label>URL Kelembapan Tanah</label><input type="text" name="soil_url" value="{{ $soilUrl }}" placeholder="http://ip/soil"></div>
+      <div><label>URL Suhu + Kelembapan Udara</label><input type="text" name="env_url" value="{{ $envUrl }}" placeholder="http://ip/env"></div>
+      <div><label>URL Cahaya (lux)</label><input type="text" name="light_url" value="{{ $lightUrl }}" placeholder="http://ip/light"></div>
+      <div><label>URL Exhaust Fan</label><input type="text" name="fan_url" value="{{ $fanUrl }}" placeholder="http://ip/fan"></div>
     </div>
-    <div class="muted" style="font-size:12px;margin:14px 0">
-      Email dikirim otomatis saat status sensor <b>berubah</b> menjadi WARNING atau DANGER (tidak spam berulang).
-    </div>
-    <button class="btn">Simpan Pengaturan</button>
+    <button class="btn" style="margin-top:14px">Simpan URL</button>
   </form>
-  <form method="POST" action="{{ route('notify.test') }}" style="margin-top:10px">@csrf
-    <button class="btn ghost">Kirim Email Uji</button>
-  </form>
+  <div class="muted" style="font-size:12px;margin-top:10px">Kosongkan yang belum ada. Perekaman berjalan saat berada dalam satu jaringan dengan node sensor; grafik tetap dapat dilihat kapan saja.</div>
 </div>
 
-<div class="section-title">Registrasi Sensor</div>
-<div class="panel pad" style="margin-bottom:18px">
-  <form method="POST" action="{{ route('sensors.store') }}">@csrf
-    <div class="form-grid">
-      <div><label>Device ID</label><select name="device_id" required><option value="esp32_master">esp32_master</option><option value="rpi_vision">rpi_vision</option></select></div>
-      <div><label>Tipe Sensor</label><input type="text" name="sensor_type" placeholder="cth: temperature" required></div>
-      <div><label>Label</label><input type="text" name="label" placeholder="cth: Suhu Udara" required></div>
-      <div><label>Satuan</label><input type="text" name="unit" placeholder="cth: °C" required></div>
-      <div><label>Owner / PIC</label><input type="text" name="owner" placeholder="cth: Admin"></div>
-      <div><label>Setpoint Min (SPmin)</label><input type="number" step="0.01" name="threshold_min" placeholder="cth: 25"></div>
-      <div><label>Setpoint Max (SPmax)</label><input type="number" step="0.01" name="threshold_max" placeholder="cth: 30"></div>
-    </div>
-    <div class="muted" style="font-size:12px;margin:14px 0"><b>Normal:</b> SPmin ≤ PV ≤ SPmax · <b>Warning:</b> deviasi ≤ 15% · <b>Danger:</b> deviasi &gt; 15%</div>
-    <button class="btn">Simpan Sensor</button>
-  </form>
+<div class="panel pad" style="margin-bottom:16px;display:flex;align-items:center;gap:12px">
+  <button class="btn" id="btnStart">▶ Mulai Perekaman (1 dtk)</button>
+  <button class="btn danger" id="btnStop" style="display:none">■ Stop</button>
+  <span class="muted" id="status">idle</span>
 </div>
 
-<div class="section-title">Daftar Node Sensor Terdaftar</div>
-<div class="panel"><table>
-  <thead><tr><th>Device ID</th><th>Tipe</th><th>Label</th><th>Satuan</th><th>Owner</th><th>SPmin</th><th>SPmax</th><th>Status</th><th style="text-align:right">Aksi</th></tr></thead>
-  <tbody>
-    @forelse($sensors as $sensor)
-    <tr><td><code>{{ $sensor->device_id }}</code></td><td><code>{{ $sensor->sensor_type }}</code></td>
-      <td style="font-weight:600">{{ $sensor->label }}</td><td>{{ $sensor->unit }}</td><td class="muted">{{ $sensor->owner }}</td>
-      <td class="mono cu">{{ $sensor->threshold_min ?? '—' }}</td><td class="mono cr">{{ $sensor->threshold_max ?? '—' }}</td>
-      <td>@if($sensor->is_active)<span class="st st-normal">AKTIF</span>@else<span class="st st-PENDING">NONAKTIF</span>@endif</td>
-      <td style="text-align:right"><form method="POST" action="{{ route('sensors.destroy', $sensor->id) }}" onsubmit="return confirm('Hapus sensor {{ $sensor->label }}?')" style="margin:0">@csrf @method('DELETE')<button type="submit" class="btn-del">Hapus</button></form></td></tr>
-    @empty
-    <tr><td colspan="9" style="text-align:center;padding:26px" class="muted">Belum ada node sensor terdaftar.</td></tr>
-    @endforelse
-  </tbody>
-</table></div>
+<div class="summary">
+  <div class="stat"><b id="vSuhu">—</b><span>Suhu (°C)</span></div>
+  <div class="stat"><b id="vHum">—</b><span>Kelembapan Udara (%)</span></div>
+  <div class="stat"><b id="vLux">—</b><span>Cahaya (lux)</span></div>
+  <div class="stat"><b id="vSoil" style="color:var(--accent)">—</b><span>Tanah rata² (%)</span></div>
+  <div class="stat"><b id="vFan">—</b><span>Fan</span></div>
+</div>
+
+<div class="section-title">Suhu &amp; Kelembapan Udara</div><div class="panel pad"><canvas id="cEnv" height="110"></canvas></div>
+<div class="section-title">Kelembapan Tanah (sebelum vs sesudah siram)</div><div class="panel pad"><canvas id="cSoil" height="110"></canvas></div>
+<div class="section-title">Cahaya (lux)</div><div class="panel pad"><canvas id="cLux" height="80"></canvas></div>
+<div class="section-title">Exhaust Fan</div><div class="panel pad"><canvas id="cFan" height="80"></canvas></div>
 
 </main>
-
+<script>
+const POLL_URL="{{ route('soil.poll') }}", HISTORY_URL="{{ route('soil.history') }}";
+let timer=null,labels=[];
+const base=()=>({responsive:true,animation:false,scales:{x:{ticks:{color:'#8ba0c2',maxTicksLimit:8},grid:{color:'rgba(148,163,184,.1)'}},y:{ticks:{color:'#8ba0c2'},grid:{color:'rgba(148,163,184,.1)'}}},plugins:{legend:{labels:{color:'#e7edf8'}}}});
+const mk=(id,ds)=>new Chart(document.getElementById(id),{type:'line',data:{labels,datasets:ds},options:base()});
+const L=(l,c,w=2)=>({label:l,data:[],borderColor:c,borderWidth:w,tension:.35,pointRadius:0});
+const cEnv=mk('cEnv',[L('Suhu °C','#fb7185',2.5),L('Kelembapan Udara %','#4f8cff')]);
+const cSoil=mk('cSoil',[L('Soil 1','#fbbf24'),L('Soil 2','#4f8cff'),L('Soil 3','#a78bfa'),L('Rata-rata','#34d399',2.5)]);
+const cLux=mk('cLux',[L('Lux','#f59e0b')]);const cFan=mk('cFan',[L('Fan','#22d3ee')]);
+const charts=[cEnv,cSoil,cLux,cFan];
+function pushRow(r){labels.push(r.created_at?new Date(r.created_at).toLocaleTimeString('id-ID'):(r.at||''));
+  cEnv.data.datasets[0].data.push(r.temp_c);cEnv.data.datasets[1].data.push(r.hum_pct);
+  cSoil.data.datasets[0].data.push(r.soil_1);cSoil.data.datasets[1].data.push(r.soil_2);cSoil.data.datasets[2].data.push(r.soil_3);cSoil.data.datasets[3].data.push(r.soil_avg);
+  cLux.data.datasets[0].data.push(r.lux);cFan.data.datasets[0].data.push(r.fan_speed);
+  if(labels.length>120){labels.shift();charts.forEach(c=>c.data.datasets.forEach(d=>d.data.shift()));}}
+const draw=()=>charts.forEach(c=>c.update());
+async function loadHistory(){try{const rows=await(await fetch(HISTORY_URL)).json();labels.length=0;charts.forEach(c=>c.data.datasets.forEach(d=>d.data.length=0));rows.forEach(pushRow);draw();}catch(e){}}
+async function poll(){try{const res=await fetch(POLL_URL,{cache:'no-store'});const j=await res.json();
+  if(!res.ok){status.innerHTML='<span style="color:var(--dng)">⚠ '+(j.error||'error')+'</span>';return;}
+  vSuhu.textContent=j.temp_c??'—';vHum.textContent=j.hum_pct??'—';vLux.textContent=j.lux??'—';vSoil.textContent=j.soil_avg??'—';vFan.textContent=j.fan_speed??'—';
+  status.innerHTML='<span style="color:var(--ok);font-weight:700">● merekam</span> · '+j.at+(j.kategori?' · tanah: <b>'+j.kategori+'</b>':'');pushRow(j);draw();
+}catch(e){status.innerHTML='<span style="color:var(--dng)">⚠ gagal konek</span>';}}
+btnStart.onclick=()=>{if(timer)return;poll();timer=setInterval(poll,1000);btnStart.style.display='none';btnStop.style.display='';};
+btnStop.onclick=()=>{clearInterval(timer);timer=null;btnStop.style.display='none';btnStart.style.display='';status.textContent='berhenti';};
+loadHistory();
+</script>
 </body></html>

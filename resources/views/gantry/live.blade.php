@@ -2,7 +2,7 @@
 <html lang="id"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="csrf-token" content="{{ csrf_token() }}">
-<title>Manajemen Sensor — Greenhouse Monitor</title>
+<title>Gantry — Greenhouse Monitor</title>
 
 
 <style>
@@ -115,8 +115,8 @@
   <div class="sb-sec">Menu</div>
   <nav class="sb-nav">
     <a class="" href="{{ url('/') }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Dashboard</span></a>
-    <a class="active" href="{{ url('/sensors') }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg><span>Kelola Sensor</span></a>
-    <a class="" href="{{ route('gantry.live') }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="12" r="3"/></svg><span>Gantry</span></a>
+    <a class="" href="{{ url('/sensors') }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg><span>Kelola Sensor</span></a>
+    <a class="active" href="{{ route('gantry.live') }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="12" r="3"/></svg><span>Gantry</span></a>
     <a class="" href="{{ route('gantry.recap') }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span>Rekap</span></a>
     <a class="" href="{{ route('soil.index') }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg><span>Grafik Sensor</span></a>
   </nav>
@@ -129,72 +129,70 @@
 </aside>
 <main class="content">
 
-<div class="pagehead"><div><h1>Manajemen Node Sensor</h1><div class="sub">Registrasi node sensor beserta setpoint (SPmin/SPmax) untuk klasifikasi status pembacaan</div></div></div>
+<div class="pagehead">
+  <div><h1>Kontrol &amp; Akuisisi Gantry</h1>
+    <div class="sub"><span id="meta" class="muted">memuat…</span> <span id="updated" class="muted"></span> <span id="err" style="color:var(--warn)"></span></div></div>
+</div>
+@if(session('gantry_error'))<div class="flash err">{{ session('gantry_error') }}</div>@endif
 @if(session('success'))<div class="flash">{{ session('success') }}</div>@endif
-@if(session('error'))<div class="flash err">{{ session('error') }}</div>@endif
 
-<div class="section-title">Notifikasi Email</div>
-<div class="panel pad" style="margin-bottom:18px">
-  @php
-    $notifEmail = \DB::table('app_settings')->where('name','notify_email')->value('value');
-    $notifOn    = \DB::table('app_settings')->where('name','notify_enabled')->value('value') === '1';
-  @endphp
-  <form method="POST" action="{{ route('notify.save') }}">@csrf
-    <div class="form-grid">
-      <div>
-        <label>Email Penerima Peringatan</label>
-        <input type="email" name="notify_email" value="{{ $notifEmail }}" placeholder="nama@email.com">
-      </div>
-      <div style="display:flex;align-items:flex-end">
-        <label style="display:flex;align-items:center;gap:9px;text-transform:none;letter-spacing:0;font-size:13px;font-weight:500;color:var(--text);cursor:pointer;margin:0">
-          <input type="checkbox" name="notify_enabled" value="1" {{ $notifOn ? 'checked' : '' }} style="width:auto">
-          Aktifkan notifikasi email
-        </label>
-      </div>
-    </div>
-    <div class="muted" style="font-size:12px;margin:14px 0">
-      Email dikirim otomatis saat status sensor <b>berubah</b> menjadi WARNING atau DANGER (tidak spam berulang).
-    </div>
-    <button class="btn">Simpan Pengaturan</button>
-  </form>
-  <form method="POST" action="{{ route('notify.test') }}" style="margin-top:10px">@csrf
-    <button class="btn ghost">Kirim Email Uji</button>
-  </form>
+<div class="section-title">Kontrol Sesi</div>
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+  <form method="POST" action="{{ route('gantry.start') }}" onsubmit="return confirm('Mulai SCAN? Gantry akan bergerak.')">@csrf<input type="hidden" name="sessionType" value="SCAN"><button class="btn">▶ Mulai Scan</button></form>
+  <form method="POST" action="{{ route('gantry.start') }}" onsubmit="return confirm('Mulai WATERING? Gantry akan menyiram.')">@csrf<input type="hidden" name="sessionType" value="WATERING"><button class="btn cyan">💧 Mulai Watering</button></form>
+  @if($sessionId)<form method="POST" action="{{ route('gantry.stop', ['id'=>$sessionId]) }}">@csrf<button class="btn danger">■ Stop Sesi #{{ $sessionId }}</button></form>@endif
 </div>
+<div class="muted" style="font-size:12px;margin-bottom:4px">Satu sesi berjalan dalam satu waktu. Hasil muncul otomatis di bawah.</div>
 
-<div class="section-title">Registrasi Sensor</div>
-<div class="panel pad" style="margin-bottom:18px">
-  <form method="POST" action="{{ route('sensors.store') }}">@csrf
-    <div class="form-grid">
-      <div><label>Device ID</label><select name="device_id" required><option value="esp32_master">esp32_master</option><option value="rpi_vision">rpi_vision</option></select></div>
-      <div><label>Tipe Sensor</label><input type="text" name="sensor_type" placeholder="cth: temperature" required></div>
-      <div><label>Label</label><input type="text" name="label" placeholder="cth: Suhu Udara" required></div>
-      <div><label>Satuan</label><input type="text" name="unit" placeholder="cth: °C" required></div>
-      <div><label>Owner / PIC</label><input type="text" name="owner" placeholder="cth: Admin"></div>
-      <div><label>Setpoint Min (SPmin)</label><input type="number" step="0.01" name="threshold_min" placeholder="cth: 25"></div>
-      <div><label>Setpoint Max (SPmax)</label><input type="number" step="0.01" name="threshold_max" placeholder="cth: 30"></div>
-    </div>
-    <div class="muted" style="font-size:12px;margin:14px 0"><b>Normal:</b> SPmin ≤ PV ≤ SPmax · <b>Warning:</b> deviasi ≤ 15% · <b>Danger:</b> deviasi &gt; 15%</div>
-    <button class="btn">Simpan Sensor</button>
-  </form>
+<div class="section-title">Hasil Pemindaian (Real-Time)</div>
+<div class="summary" id="summary"></div>
+<div id="feat" style="display:none;grid-template-columns:minmax(0,360px) 1fr;gap:16px;margin-bottom:20px" class="feat-wrap">
+  <img id="featImg" style="width:100%;border-radius:12px;border:1px solid var(--line);background:#0c1424" alt="">
+  <div class="panel pad"><div style="color:var(--accent);font-size:11px;font-weight:700;letter-spacing:.4px">CAPTURE TERBARU</div>
+    <h2 id="featCode" style="margin:4px 0 10px;font-size:24px">—</h2>
+    <div style="display:flex;gap:12px;font-size:13px" class="muted"><span class="cr">Ripe: <b id="fR">0</b></span><span class="ct">Turning: <b id="fT">0</b></span><span class="cu">Unripe: <b id="fU">0</b></span><span>Total: <b id="fTot">0</b></span></div>
+    <div id="featTime" class="muted" style="margin-top:8px;font-size:12px"></div></div>
 </div>
+<div class="grid" id="grid"></div>
 
-<div class="section-title">Daftar Node Sensor Terdaftar</div>
-<div class="panel"><table>
-  <thead><tr><th>Device ID</th><th>Tipe</th><th>Label</th><th>Satuan</th><th>Owner</th><th>SPmin</th><th>SPmax</th><th>Status</th><th style="text-align:right">Aksi</th></tr></thead>
-  <tbody>
-    @forelse($sensors as $sensor)
-    <tr><td><code>{{ $sensor->device_id }}</code></td><td><code>{{ $sensor->sensor_type }}</code></td>
-      <td style="font-weight:600">{{ $sensor->label }}</td><td>{{ $sensor->unit }}</td><td class="muted">{{ $sensor->owner }}</td>
-      <td class="mono cu">{{ $sensor->threshold_min ?? '—' }}</td><td class="mono cr">{{ $sensor->threshold_max ?? '—' }}</td>
-      <td>@if($sensor->is_active)<span class="st st-normal">AKTIF</span>@else<span class="st st-PENDING">NONAKTIF</span>@endif</td>
-      <td style="text-align:right"><form method="POST" action="{{ route('sensors.destroy', $sensor->id) }}" onsubmit="return confirm('Hapus sensor {{ $sensor->label }}?')" style="margin:0">@csrf @method('DELETE')<button type="submit" class="btn-del">Hapus</button></form></td></tr>
-    @empty
-    <tr><td colspan="9" style="text-align:center;padding:26px" class="muted">Belum ada node sensor terdaftar.</td></tr>
-    @endforelse
-  </tbody>
-</table></div>
+<div class="section-title">Riwayat Sesi</div>
+<div class="panel"><table><thead><tr><th>ID</th><th>Tipe</th><th>Status</th><th>Tanaman</th><th>Mulai (WIB)</th><th></th></tr></thead>
+  <tbody id="histBody"><tr><td colspan="6" class="muted" style="padding:16px">memuat…</td></tr></tbody></table></div>
 
 </main>
-
+<script>
+const SID=@json($sessionId ?? null);
+const BASE="{{ route('gantry.live.data') }}", DATA_URL=SID?(BASE+"?id="+SID):BASE;
+const SESS_URL="{{ route('gantry.sessions') }}", IMG_URL="{{ route('gantry.img') }}", HERE="{{ route('gantry.live') }}";
+const imgSrc=(p)=>p?IMG_URL+"?p="+encodeURIComponent(p):"";
+const el=(i)=>document.getElementById(i);
+const stat=(v,l,c='')=>`<div class="stat"><b class="${c}">${v}</b><span>${l}</span></div>`;
+const fmt=(s)=>{try{return new Date(s).toLocaleString('id-ID');}catch(e){return s||'';}};
+function render(session){
+  if(!session){el('meta').textContent='Belum ada data sesi.';return;}
+  const caps=(session.captures||[]).slice().sort((a,b)=>(a.plantIndex||0)-(b.plantIndex||0));
+  let R=0,T=0,U=0,BR=0,ready=0;caps.forEach(c=>{R+=c.ripeCount||0;T+=c.turningCount||0;U+=c.unripeCount||0;BR+=c.brokenCount||0;if((c.ripeCount||0)>5)ready++;});
+  el('summary').innerHTML=stat(caps.length,'Tanaman')+stat(R+T+U+BR,'Total buah')+stat(R,'Ripe','cr')+stat(T,'Turning','ct')+stat(U,'Unripe','cu')+stat(BR,'Broken')+stat(ready,'Siap panen','cr');
+  const run=(session.status==='RUNNING');
+  el('meta').innerHTML=`Sesi #${session.id} <span class="st st-${session.status}">${session.status}</span> · ${caps.length} tanaman`;
+  const newest=caps.slice().sort((a,b)=>new Date(b.scannedAt||0)-new Date(a.scannedAt||0))[0];
+  if(newest){el('feat').style.display='grid';el('featImg').src=imgSrc(newest.annotatedImageUrl||newest.imageUrl);
+    el('featCode').textContent='T-'+(newest.plantIndex??'?');el('fR').textContent=newest.ripeCount||0;el('fT').textContent=newest.turningCount||0;
+    el('fU').textContent=newest.unripeCount||0;el('fTot').textContent=newest.totalFruits||0;el('featTime').textContent='dipindai: '+fmt(newest.scannedAt);}
+  el('grid').innerHTML=caps.map(c=>{const src=imgSrc(c.annotatedImageUrl||c.imageUrl);
+    const badge=(c.ripeCount||0)>5?'<span class="sbadge b-danger" style="position:static;margin-left:6px">Siap panen</span>':'';
+    const img=src?`<img src="${src}" loading="lazy" style="width:100%;height:100%;object-fit:cover">`:'<span class="muted">no img</span>';
+    return `<div class="scard" style="padding:0;overflow:hidden"><div style="aspect-ratio:1/1;background:#0c1424;display:flex;align-items:center;justify-content:center">${img}</div>
+      <div style="padding:10px 12px"><div style="font-weight:700;display:flex;align-items:center">T-${c.plantIndex??'?'} ${badge}</div>
+      <div style="display:flex;gap:8px;margin-top:5px;font-size:12px" class="muted"><span class="cr">R${c.ripeCount||0}</span><span class="ct">T${c.turningCount||0}</span><span class="cu">U${c.unripeCount||0}</span><span>Σ${c.totalFruits||0}</span></div></div></div>`;
+  }).join('');
+}
+async function tick(){try{const r=await fetch(DATA_URL,{cache:'no-store'});if(!r.ok)throw 0;const j=await r.json();render(j.session);el('err').textContent='';el('updated').textContent='diperbarui '+new Date().toLocaleTimeString('id-ID');}catch(e){el('err').textContent='⚠ memuat ulang…';}}
+async function loadHist(){try{const j=await(await fetch(SESS_URL,{cache:'no-store'})).json();
+  el('histBody').innerHTML=(j.sessions||[]).map(s=>{const act=(SID&&String(SID)===String(s.id))?'style="background:rgba(79,140,255,.08)"':'';
+    const lihat=s.caps?`<a class="btn ghost" style="padding:4px 12px;font-size:11.5px" href="${HERE}?id=${s.id}">Lihat</a>`:'<span class="muted">—</span>';
+    return `<tr ${act}><td>#${s.id}</td><td>${s.type}</td><td><span class="st st-${s.status}">${s.status}</span></td><td>${s.plants??'-'}</td><td>${s.date}</td><td style="text-align:right">${lihat}</td></tr>`;}).join('')||'<tr><td colspan=6 class=muted style=padding:16px>Belum ada sesi.</td></tr>';
+}catch(e){el('histBody').innerHTML='<tr><td colspan=6 style="padding:16px;color:var(--warn)">Gagal memuat riwayat.</td></tr>';}}
+tick();setInterval(tick,4000);loadHist();setInterval(loadHist,15000);
+</script>
 </body></html>
