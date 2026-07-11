@@ -52,8 +52,8 @@ class SensorSync
             $values['soil_avg'] = $this->num($d['avg'] ?? null);
         }
         if ($d = $this->fetch($this->setting('env_url'))) {
-            $values['temperature'] = $this->num($d['bme680']['suhu_C'] ?? $d['temp'] ?? $d['temperature'] ?? $d['suhu'] ?? null);
-            $values['humidity']    = $this->num($d['bme680']['rh_pct'] ?? $d['hum'] ?? $d['humidity'] ?? $d['kelembaban'] ?? $d['kelembapan'] ?? null);
+           $values['temperature'] = $this->num($d['dht22']['suhu_C'] ?? $d['bme680']['suhu_C'] ?? $d['temp'] ?? $d['temperature'] ?? $d['suhu'] ?? null);
+            $values['humidity']    = $this->num($d['dht22']['rh_pct'] ?? $d['bme680']['rh_pct'] ?? $d['hum'] ?? $d['humidity'] ?? $d['kelembaban'] ?? $d['kelembapan'] ?? null);
         }
         if ($d = $this->fetch($this->setting('light_url'))) {
             $values['light_intensity'] = $this->num($d['bh1750']['lux'] ?? $d['lux'] ?? $d['light'] ?? $d['intensity'] ?? null);

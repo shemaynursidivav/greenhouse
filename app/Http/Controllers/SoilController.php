@@ -82,8 +82,8 @@ class SoilController extends Controller
 
         // --- Suhu + kelembapan udara (1 API Rio). GANTI field kalau beda. ---
         if ($d = $this->fetch($this->getSetting('env_url'))) {
-            $temp = $this->num($d['bme680']['suhu_C'] ?? $d['temp'] ?? $d['temperature'] ?? $d['suhu'] ?? null);
-            $hum  = $this->num($d['bme680']['rh_pct'] ?? $d['hum'] ?? $d['humidity'] ?? $d['kelembaban'] ?? $d['kelembapan'] ?? null);
+           $temp = $this->num($d['dht22']['suhu_C'] ?? $d['bme680']['suhu_C'] ?? $d['temp'] ?? $d['temperature'] ?? $d['suhu'] ?? null);
+            $hum  = $this->num($d['dht22']['rh_pct'] ?? $d['bme680']['rh_pct'] ?? $d['hum'] ?? $d['humidity'] ?? $d['kelembaban'] ?? $d['kelembapan'] ?? null);
             $row += ['temp_c'=>$temp,'hum_pct'=>$hum];
             $out += ['temp_c'=>$temp,'hum_pct'=>$hum];
             $any = true;
