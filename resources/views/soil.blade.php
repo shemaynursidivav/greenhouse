@@ -140,6 +140,7 @@
       <div><label>URL Suhu + Kelembapan Udara</label><input type="text" name="env_url" value="{{ $envUrl }}" placeholder="http://ip/env"></div>
       <div><label>URL Cahaya (lux)</label><input type="text" name="light_url" value="{{ $lightUrl }}" placeholder="http://ip/light"></div>
       <div><label>URL Exhaust Fan</label><input type="text" name="fan_url" value="{{ $fanUrl }}" placeholder="http://ip/fan"></div>
+      <div><label>URL Energi (PZEM)</label><input type="text" name="energy_url" value="{{ $energyUrl }}" placeholder="http://ip/energy"></div>
     </div>
     <button class="btn" style="margin-top:14px">Simpan URL</button>
   </form>
@@ -157,13 +158,22 @@
   <div class="stat"><b id="vHum">—</b><span>Kelembapan Udara (%)</span></div>
   <div class="stat"><b id="vLux">—</b><span>Cahaya (lux)</span></div>
   <div class="stat"><b id="vSoil" style="color:var(--accent)">—</b><span>Tanah rata² (%)</span></div>
+  <div class="stat"><b id="vSoil1">—</b><span>Tanah 1 (%)</span></div>
+  <div class="stat"><b id="vSoil2">—</b><span>Tanah 2 (%)</span></div>
+  <div class="stat"><b id="vSoil3">—</b><span>Tanah 3 (%)</span></div>
   <div class="stat"><b id="vFan">—</b><span>Fan</span></div>
+  <div class="stat"><b id="vVolt">—</b><span>Tegangan (V)</span></div>
+  <div class="stat"><b id="vCurr">—</b><span>Arus (A)</span></div>
+  <div class="stat"><b id="vPower">—</b><span>Daya AC (W)</span></div>
+  <div class="stat"><b id="vTotal">—</b><span>Daya Total (W)</span></div>
+  <div class="stat"><b id="vPf">—</b><span>Power Factor</span></div>
 </div>
 
 <div class="section-title">Suhu &amp; Kelembapan Udara</div><div class="panel pad"><canvas id="cEnv" height="110"></canvas></div>
 <div class="section-title">Kelembapan Tanah (sebelum vs sesudah siram)</div><div class="panel pad"><canvas id="cSoil" height="110"></canvas></div>
 <div class="section-title">Cahaya (lux)</div><div class="panel pad"><canvas id="cLux" height="80"></canvas></div>
 <div class="section-title">Exhaust Fan</div><div class="panel pad"><canvas id="cFan" height="80"></canvas></div>
+<div class="section-title">Daya Listrik (W)</div><div class="panel pad"><canvas id="cPower" height="80"></canvas></div>
 
 </main>
 <script>
@@ -174,18 +184,18 @@ const mk=(id,ds)=>new Chart(document.getElementById(id),{type:'line',data:{label
 const L=(l,c,w=2)=>({label:l,data:[],borderColor:c,borderWidth:w,tension:.35,pointRadius:0});
 const cEnv=mk('cEnv',[L('Suhu °C','#fb7185',2.5),L('Kelembapan Udara %','#4f8cff')]);
 const cSoil=mk('cSoil',[L('Soil 1','#fbbf24'),L('Soil 2','#4f8cff'),L('Soil 3','#a78bfa'),L('Rata-rata','#34d399',2.5)]);
-const cLux=mk('cLux',[L('Lux','#f59e0b')]);const cFan=mk('cFan',[L('Fan','#22d3ee')]);
-const charts=[cEnv,cSoil,cLux,cFan];
+const cLux=mk('cLux',[L('Lux','#f59e0b')]);const cFan=mk('cFan',[L('Fan','#22d3ee')]); const cPower=mk('cPower',[L('Daya AC W','#f59e0b'),L('Daya Total W','#34d399',2.5)]);
+const charts=[cEnv,cSoil,cLux,cFan,cPower];
 function pushRow(r){labels.push(r.created_at?new Date(r.created_at).toLocaleTimeString('id-ID'):(r.at||''));
   cEnv.data.datasets[0].data.push(r.temp_c);cEnv.data.datasets[1].data.push(r.hum_pct);
   cSoil.data.datasets[0].data.push(r.soil_1);cSoil.data.datasets[1].data.push(r.soil_2);cSoil.data.datasets[2].data.push(r.soil_3);cSoil.data.datasets[3].data.push(r.soil_avg);
-  cLux.data.datasets[0].data.push(r.lux);cFan.data.datasets[0].data.push(r.fan_speed);
+  cLux.data.datasets[0].data.push(r.lux);cFan.data.datasets[0].data.push(r.fan_speed); cPower.data.datasets[0].data.push(r.power_w);cPower.data.datasets[1].data.push(r.total_w);
   if(labels.length>120){labels.shift();charts.forEach(c=>c.data.datasets.forEach(d=>d.data.shift()));}}
 const draw=()=>charts.forEach(c=>c.update());
 async function loadHistory(){try{const rows=await(await fetch(HISTORY_URL)).json();labels.length=0;charts.forEach(c=>c.data.datasets.forEach(d=>d.data.length=0));rows.forEach(pushRow);draw();}catch(e){}}
 async function poll(){try{const res=await fetch(POLL_URL,{cache:'no-store'});const j=await res.json();
   if(!res.ok){status.innerHTML='<span style="color:var(--dng)">⚠ '+(j.error||'error')+'</span>';return;}
-  vSuhu.textContent=j.temp_c??'—';vHum.textContent=j.hum_pct??'—';vLux.textContent=j.lux??'—';vSoil.textContent=j.soil_avg??'—';vFan.textContent=j.fan_speed??'—';
+  vSuhu.textContent=j.temp_c??'—';vHum.textContent=j.hum_pct??'—';vLux.textContent=j.lux??'—';vSoil.textContent=j.soil_avg??'—'; vSoil1.textContent=j.soil_1??'—';vSoil2.textContent=j.soil_2??'—';vSoil3.textContent=j.soil_3??'—'; vFan.textContent=j.fan_speed??'—'; vVolt.textContent=j.volt_v??'—';vCurr.textContent=j.curr_a??'—';vPower.textContent=j.power_w??'—';vTotal.textContent=j.total_w??'—';vPf.textContent=j.pf??'—';
   status.innerHTML='<span style="color:var(--ok);font-weight:700">● merekam</span> · '+j.at+(j.kategori?' · tanah: <b>'+j.kategori+'</b>':'');pushRow(j);draw();
 }catch(e){status.innerHTML='<span style="color:var(--dng)">⚠ gagal konek</span>';}}
 btnStart.onclick=()=>{if(timer)return;poll();timer=setInterval(poll,1000);btnStart.style.display='none';btnStop.style.display='';};
