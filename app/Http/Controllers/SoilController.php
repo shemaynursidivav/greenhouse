@@ -41,6 +41,7 @@ class SoilController extends Controller
             'envUrl'   => $this->getSetting('env_url'),
             'lightUrl' => $this->getSetting('light_url'),
             'fanUrl'   => $this->getSetting('fan_url'),
+            'energyUrl'=> $this->getSetting('energy_url'),
         ]);
     }
 
@@ -51,9 +52,9 @@ class SoilController extends Controller
             'env_url'   => 'nullable|url',
             'light_url' => 'nullable|url',
             'fan_url'   => 'nullable|url',
+            'energy_url'=> 'nullable|url',
         ]);
-
-        foreach (['soil_url', 'env_url', 'light_url', 'fan_url'] as $k) {
+        foreach (['soil_url', 'env_url', 'light_url', 'fan_url', 'energy_url'] as $k) {
             DB::table('app_settings')->updateOrInsert(['name' => $k], ['value' => $r->input($k)]);
         }
 
@@ -81,16 +82,16 @@ class SoilController extends Controller
 
         // --- Suhu + kelembapan udara (1 API Rio). GANTI field kalau beda. ---
         if ($d = $this->fetch($this->getSetting('env_url'))) {
-            $temp = $this->num($d['temp'] ?? $d['temperature'] ?? $d['suhu'] ?? null);
-            $hum  = $this->num($d['hum'] ?? $d['humidity'] ?? $d['kelembaban'] ?? $d['kelembapan'] ?? null);
+            $temp = $this->num($d['bme680']['suhu_C'] ?? $d['temp'] ?? $d['temperature'] ?? $d['suhu'] ?? null);
+            $hum  = $this->num($d['bme680']['rh_pct'] ?? $d['hum'] ?? $d['humidity'] ?? $d['kelembaban'] ?? $d['kelembapan'] ?? null);
             $row += ['temp_c'=>$temp,'hum_pct'=>$hum];
             $out += ['temp_c'=>$temp,'hum_pct'=>$hum];
             $any = true;
         }
 
         // --- Cahaya (BH1750). GANTI field kalau beda. ---
-        if ($d = $this->fetch($this->getSetting('light_url'))) {
-            $lux = $this->num($d['lux'] ?? $d['light'] ?? $d['intensity'] ?? null);
+      if ($d = $this->fetch($this->getSetting('light_url'))) {
+            $lux = $this->num($d['bh1750']['lux'] ?? $d['lux'] ?? $d['light'] ?? $d['intensity'] ?? null);
             $row += ['lux'=>$lux];
             $out += ['lux'=>$lux];
             $any = true;
@@ -98,9 +99,23 @@ class SoilController extends Controller
 
         // --- Fan. GANTI field kalau beda. ---
         if ($d = $this->fetch($this->getSetting('fan_url'))) {
-            $fan = $this->num($d['fan'] ?? $d['speed'] ?? $d['rpm'] ?? $d['pwm'] ?? null);
+            $fan = $this->num($d['fan']['speed_pct'] ?? $d['speed'] ?? $d['rpm'] ?? $d['pwm'] ?? null);
             $row += ['fan_speed'=>$fan];
             $out += ['fan_speed'=>$fan];
+            $any = true;
+        }
+
+        // --- Energi (PZEM): {"ac":{voltage_V,current_A,power_W,pf,freq_Hz},"total":{power_W,dc_power_W}} ---
+        if ($d = $this->fetch($this->getSetting('energy_url'))) {
+            $volt = $this->num($d['ac']['voltage_V']  ?? null);
+            $curr = $this->num($d['ac']['current_A']  ?? null);
+            $pwr  = $this->num($d['ac']['power_W']    ?? null);
+            $pf   = $this->num($d['ac']['pf']         ?? null);
+            $freq = $this->num($d['ac']['freq_Hz']    ?? null);
+            $tot  = $this->num($d['total']['power_W'] ?? null);
+            $dc   = $this->num($d['total']['dc_power_W'] ?? null);
+            $row += ['volt_v'=>$volt,'curr_a'=>$curr,'power_w'=>$pwr,'total_w'=>$tot,'pf'=>$pf];
+            $out += ['volt_v'=>$volt,'curr_a'=>$curr,'power_w'=>$pwr,'pf'=>$pf,'freq_hz'=>$freq,'total_w'=>$tot,'dc_w'=>$dc];
             $any = true;
         }
 
@@ -120,7 +135,7 @@ class SoilController extends Controller
 
         $rows = DB::table('soil_readings')
             ->orderByDesc('id')->limit($n)
-            ->get(['soil_1','soil_2','soil_3','soil_avg','temp_c','hum_pct','lux','fan_speed','created_at'])
+            ->get(['soil_1','soil_2','soil_3','soil_avg','temp_c','hum_pct','lux','fan_speed','volt_v','curr_a','power_w','total_w','pf','created_at'])
             ->reverse()->values();
 
         return response()->json($rows);
